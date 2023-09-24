@@ -4,10 +4,10 @@ package digital
 import (
 	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/akiakaba/escol"
+	"github.com/akiakaba/escol/internal/parse"
 	"github.com/akiakaba/escol/mu"
 )
 
@@ -80,19 +80,16 @@ func Scrape(mail escol.Mail) (*Receipt, error) {
 		Email:   matches[2],
 		OrderID: matches[3],
 		Subtotal: func() int {
-			i, _ := strconv.ParseInt(strings.ReplaceAll(matches[4], ",", ""), 10, 32)
-			return int(i)
+			return parse.ParseIntFromCommaedDecimal(matches[4])
 		}(),
 		UsedPoint: func() int {
 			if matches[6] == "" {
 				return 0
 			}
-			i, _ := strconv.ParseInt(strings.ReplaceAll(matches[6], ",", ""), 10, 32)
-			return int(i)
+			return parse.ParseIntFromCommaedDecimal(matches[6])
 		}(),
 		TotalAmount: func() int {
-			i, _ := strconv.ParseInt(strings.ReplaceAll(matches[8], ",", ""), 10, 32)
-			return int(i)
+			return parse.ParseIntFromCommaedDecimal(matches[8])
 		}(),
 		Title:     matches[9],
 		Publisher: matches[10],

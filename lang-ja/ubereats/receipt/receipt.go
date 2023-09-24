@@ -3,10 +3,10 @@ package receipt
 import (
 	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/akiakaba/escol"
+	"github.com/akiakaba/escol/internal/parse"
 	"github.com/akiakaba/escol/lang-ja/ubereats/internal"
 )
 
@@ -57,11 +57,8 @@ func Scrape(mail escol.Mail) (*Receipt, error) {
 		if len(amountMatches) < 2 {
 			return r, fmt.Errorf("len(amountMatches): %v, body: %s", len(amountMatches), r.Body)
 		}
-		amount, err := strconv.ParseInt(strings.ReplaceAll(amountMatches[1], ",", ""), 10, 32)
-		if err != nil {
-			return r, err
-		}
-		r.TotalAmount = int(amount)
+		totalAmount := parse.ParseIntFromCommaedDecimal(amountMatches[1])
+		r.TotalAmount = totalAmount
 	}
 	return r, nil
 }

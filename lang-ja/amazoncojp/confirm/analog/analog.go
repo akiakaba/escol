@@ -23,14 +23,6 @@ type Receipt struct {
 	Body    string `json:"-"`
 }
 
-func (r *Receipt) OrderDetailURLs() []string {
-	var urls []string
-	for _, d := range r.Details {
-		urls = append(urls, d.OrderDetailURL())
-	}
-	return urls
-}
-
 type Detail struct {
 	OrderID       string   `json:"order_id"`       // 注文番号
 	OrderDate     string   `json:"order_date"`     // 注文日
@@ -123,10 +115,7 @@ func Scrape(mail escol.Mail) (*Receipt, error) {
 			if len(matches) < 3 {
 				return r, fmt.Errorf("receiptParts tail totalAmount/paymentMethod match error. tail:%s, body:%s", tail, r.Body)
 			}
-			totalAmount, err := parse.ParseIntFromCommaedDecimal(matches[1])
-			if err != nil {
-				panic(err) // regexp is wrong
-			}
+			totalAmount := parse.ParseIntFromCommaedDecimal(matches[1])
 			paymentMethod := matches[2]
 
 			r.Details = append(r.Details, Detail{

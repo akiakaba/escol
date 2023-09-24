@@ -1,11 +1,11 @@
-package yoshikei
+package tokyo
 
 import (
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/akiakaba/escol"
+	"github.com/akiakaba/escol/internal/parse"
 	"github.com/akiakaba/escol/mu"
 )
 
@@ -25,13 +25,10 @@ func Scrape(mail escol.Mail) (*Receipt, error) {
 		return nil, err
 	}
 	amount := regexp.MustCompile(`合計金額[\s　]+(\d+)[\s　]+円`).FindStringSubmatch(body)
-	aInt, err := strconv.ParseInt(amount[1], 10, 32)
-	if err != nil {
-		return nil, err
-	}
+	totalAmount := parse.ParseIntFromCommaedDecimal(amount[1])
 	return &Receipt{
 		TargetWeek:  week,
-		TotalAmount: int(aInt),
+		TotalAmount: totalAmount,
 	}, nil
 }
 

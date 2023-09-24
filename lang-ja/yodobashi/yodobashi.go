@@ -3,10 +3,10 @@ package yodobashi
 import (
 	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/akiakaba/escol"
+	"github.com/akiakaba/escol/internal/parse"
 	"github.com/akiakaba/escol/internal/slices"
 	"github.com/akiakaba/escol/mu"
 )
@@ -35,12 +35,12 @@ func Scrape(mail escol.Mail) (*Receipt, error) {
 	product := regexp.MustCompile(`「(.+?)」`).FindAllStringSubmatch(text, -1)
 	//FIXME: panic: runtime error: index out of range [1] with length 0
 	amount := regexp.MustCompile(`【ご注文金額】今回のお買い物合計金額[\s　]*([\d,]+) 円`).FindStringSubmatch(body)
-	aInt, err := strconv.ParseInt(strings.ReplaceAll(amount[1], ",", ""), 10, 32)
+	totalAmount := parse.ParseIntFromCommaedDecimal(amount[1])
 	if err != nil {
 		return nil, err
 	}
 	return &Receipt{
 		Products:    slices.Map(product, func(p []string) string { return p[1] }),
-		TotalAmount: int(aInt),
+		TotalAmount: totalAmount,
 	}, nil
 }

@@ -4,10 +4,9 @@ package sas
 import (
 	"fmt"
 	"regexp"
-	"strconv"
-	"strings"
 
 	"github.com/akiakaba/escol"
+	"github.com/akiakaba/escol/internal/parse"
 	"github.com/akiakaba/escol/internal/slices"
 	"github.com/akiakaba/escol/mu"
 )
@@ -32,13 +31,14 @@ func Scrape(mail escol.Mail) (*Receipt, error) {
 	}
 
 	products := regexp.MustCompile(`商品\d+\s+(.+?)\s+数量：\s+\d+\s+商品の価格:\s+￥[\d,]+`).FindAllStringSubmatch(body, -1)
-	amount := regexp.MustCompile(`合計金額\s+￥([\d,]+)`).FindStringSubmatch(body)
-	aInt, err := strconv.ParseInt(strings.ReplaceAll(amount[1], ",", ""), 10, 32)
-	if err != nil {
-		return nil, err
+	amountMatch := regexp.MustCompile(`合計金額\s+￥([\d,]+)`).FindStringSubmatch(body)
+	if len(amountMatch) < 2 {
+		return nil, fmt.Errorf("sas amount unmatched: %s", body)
 	}
+	totalAmount := parse.ParseIntFromCommaedDecimal(amountMatch[1])
+
 	return &Receipt{
 		Products:    slices.Map(products, func(p []string) string { return p[1] }),
-		TotalAmount: int(aInt),
+		TotalAmount: totalAmount,
 	}, nil
 }
