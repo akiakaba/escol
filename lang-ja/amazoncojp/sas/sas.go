@@ -7,10 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"google.golang.org/api/gmail/v1"
-
 	"github.com/akiakaba/escol"
-	"github.com/akiakaba/escol/gmu"
 	"github.com/akiakaba/escol/internal/slices"
 	"github.com/akiakaba/escol/mu"
 )
@@ -20,16 +17,16 @@ type Receipt struct {
 	TotalAmount int
 }
 
-func Filter(message *gmail.Message, hints *escol.Hint) bool {
-	return hints.From() == `"Amazon定期おトク便" <no-reply@amazon.co.jp>`
+func Filter(mail escol.Mail) bool {
+	return mail.From() == `"Amazon定期おトク便" <no-reply@amazon.co.jp>`
 }
 
-func Scrape(message *gmail.Message, hints *escol.Hint) (*Receipt, error) {
-	plain, found := gmu.FindPartByMimeType(message.Payload, "text/plain")
+func Scrape(mail escol.Mail) (*Receipt, error) {
+	plain, found := mail.FindPart("text/plain")
 	if !found {
-		return nil, fmt.Errorf("text/plain parts not found. from:%s", hints.From())
+		return nil, fmt.Errorf("text/plain parts not found. from:%s", mail.From())
 	}
-	body, err := mu.DecodeBase64(plain.Body.Data)
+	body, err := mu.DecodeBase64(plain.Body())
 	if err != nil {
 		return nil, err
 	}

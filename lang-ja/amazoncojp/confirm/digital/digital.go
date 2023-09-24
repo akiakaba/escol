@@ -7,10 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"google.golang.org/api/gmail/v1"
-
 	"github.com/akiakaba/escol"
-	"github.com/akiakaba/escol/gmu"
 	"github.com/akiakaba/escol/mu"
 )
 
@@ -32,26 +29,26 @@ func (r *Receipt) OrderDetailURL() string {
 	return fmt.Sprintf("https://www.amazon.co.jp/gp/digital/your-account/order-summary.html?ie=UTF8&orderID=%s", r.OrderID)
 }
 
-func Filter(message *gmail.Message, hint *escol.Hint) bool {
-	return hint.From() == `"Amazon.co.jp" <digital-no-reply@amazon.co.jp>` &&
-		strings.HasPrefix(hint.Subject(), "Amazon.co.jpでのご注文")
+func Filter(mail escol.Mail) bool {
+	return mail.From() == `"Amazon.co.jp" <digital-no-reply@amazon.co.jp>` &&
+		strings.HasPrefix(mail.Subject(), "Amazon.co.jpでのご注文")
 }
 
-func Scrape(message *gmail.Message, hint *escol.Hint) (*Receipt, error) {
-	if !Filter(message, hint) {
+func Scrape(mail escol.Mail) (*Receipt, error) {
+	if !Filter(mail) {
 		return nil, fmt.Errorf("filtered")
 	}
 	// in case of errors
 	r := &Receipt{
-		Subject: hint.Subject(),
+		Subject: mail.Subject(),
 	}
-	plain, found := gmu.FindPartByMimeType(message.Payload, "text/plain")
+	plain, found := mail.FindPart("text/plain")
 	if !found {
-		return r, fmt.Errorf("text/plain parts not found. from:%s", hint.From())
+		return r, fmt.Errorf("text/plain parts not found. from:%s", mail.From())
 	}
-	r.Body = plain.Body.Data
+	r.Body = plain.Body()
 
-	body, err := mu.DecodeBase64(plain.Body.Data)
+	body, err := mu.DecodeBase64(plain.Body())
 	if err != nil {
 		return r, err
 	}
@@ -75,7 +72,7 @@ func Scrape(message *gmail.Message, hint *escol.Hint) (*Receipt, error) {
 	//	}
 	//	m = append(m, fmt.Sprintf("[%v:%s]", i, mm))
 	//}
-	//fmt.Println(hint.Subject())
+	//fmt.Println(mail.Subject())
 	//fmt.Println(strings.Join(m, ""))
 
 	return &Receipt{
@@ -99,7 +96,7 @@ func Scrape(message *gmail.Message, hint *escol.Hint) (*Receipt, error) {
 		}(),
 		Title:     matches[9],
 		Publisher: matches[10],
-		Subject:   hint.Subject(),
+		Subject:   mail.Subject(),
 		Body:      body,
 	}, nil
 }

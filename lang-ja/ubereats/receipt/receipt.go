@@ -6,8 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	"google.golang.org/api/gmail/v1"
-
 	"github.com/akiakaba/escol"
 	"github.com/akiakaba/escol/lang-ja/ubereats/internal"
 )
@@ -20,28 +18,28 @@ type Receipt struct {
 	Body    string
 }
 
-func Filter(message *gmail.Message, hint *escol.Hint) bool {
-	body, err := internal.ConvertBody(message)
+func Filter(mail escol.Mail) bool {
+	body, err := internal.ConvertBody(mail)
 	if err != nil {
 		return false
 	}
-	return hint.From() == `"Uber の領収書" <noreply@uber.com>` &&
-		strings.Contains(hint.Subject(), "ご注文") &&
+	return mail.From() == `"Uber の領収書" <noreply@uber.com>` &&
+		strings.Contains(mail.Subject(), "ご注文") &&
 		!strings.Contains(body, "領収書を変更いたしました。") &&
 		!strings.Contains(body, "未払いのお支払いがあります。")
 }
 
-func Scrape(message *gmail.Message, hint *escol.Hint) (*Receipt, error) {
+func Scrape(mail escol.Mail) (*Receipt, error) {
 	r := &Receipt{
-		Subject: hint.Subject(),
-		Body:    message.Payload.Body.Data,
+		Subject: mail.Subject(),
+		Body:    mail.Body(),
 	}
-	if !Filter(message, hint) {
+	if !Filter(mail) {
 		// fixme: ちゃんとしたエラー
 		return r, fmt.Errorf("not target")
 	}
 	{
-		body, err := internal.ConvertBody(message)
+		body, err := internal.ConvertBody(mail)
 		if err != nil {
 			return r, err
 		}

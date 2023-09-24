@@ -3,11 +3,10 @@ package yoshikei
 import (
 	"regexp"
 	"strconv"
-
-	"google.golang.org/api/gmail/v1"
+	"strings"
 
 	"github.com/akiakaba/escol"
-	"github.com/akiakaba/escol/gmu"
+	"github.com/akiakaba/escol/mu"
 )
 
 type Receipt struct {
@@ -15,13 +14,13 @@ type Receipt struct {
 	TotalAmount int
 }
 
-func Filter(message *gmail.Message, hint *escol.Hint) bool {
-	return hint.From() == "meisai@yoshikei-tokyo.co.jp" //TODO: 十分な絞り込みか
+func Filter(mail escol.Mail) bool {
+	return mail.From() == "meisai@yoshikei-tokyo.co.jp" //TODO: 十分な絞り込みか
 }
 
-func Scrape(message *gmail.Message, hint *escol.Hint) (*Receipt, error) {
-	week := regexp.MustCompile(`\d+/\d+週`).FindString(hint.Subject())
-	body, err := gmu.JoinBody(message.Payload)
+func Scrape(mail escol.Mail) (*Receipt, error) {
+	week := regexp.MustCompile(`\d+/\d+週`).FindString(mail.Subject())
+	body, err := joinBody(mail)
 	if err != nil {
 		return nil, err
 	}
@@ -34,4 +33,17 @@ func Scrape(message *gmail.Message, hint *escol.Hint) (*Receipt, error) {
 		TargetWeek:  week,
 		TotalAmount: int(aInt),
 	}, nil
+}
+
+func joinBody(mail escol.Mail) (string, error) {
+	var ss []string
+	body, err := mu.DecodeBase64(mail.Body())
+	if err != nil {
+		return "", err
+	}
+	ss = append(ss, strings.TrimSpace(body))
+	for _, p := range mail.Parts() {
+		ss = append(ss, p.Body())
+	}
+	return strings.Join(ss, "\n"), nil
 }

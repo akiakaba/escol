@@ -5,8 +5,6 @@ import (
 	"regexp"
 	"strings"
 
-	"google.golang.org/api/gmail/v1"
-
 	"github.com/akiakaba/escol"
 	"github.com/akiakaba/escol/lang-ja/ubereats/internal"
 )
@@ -18,26 +16,26 @@ type Unpaid struct {
 	Body    string
 }
 
-func Filter(message *gmail.Message, hint *escol.Hint) bool {
-	body, err := internal.ConvertBody(message)
+func Filter(mail escol.Mail) bool {
+	body, err := internal.ConvertBody(mail)
 	if err != nil {
 		return false
 	}
-	return hint.From() == `"Uber の領収書" <noreply@uber.com>` &&
+	return mail.From() == `"Uber の領収書" <noreply@uber.com>` &&
 		strings.Contains(body, "未払いのお支払いがあります。")
 }
 
-func Scrape(message *gmail.Message, hint *escol.Hint) (*Unpaid, error) {
+func Scrape(mail escol.Mail) (*Unpaid, error) {
 	r := &Unpaid{
-		Subject: hint.Subject(),
-		Body:    message.Payload.Body.Data,
+		Subject: mail.Subject(),
+		Body:    mail.Body(),
 	}
-	if !Filter(message, hint) {
+	if !Filter(mail) {
 		// fixme: ちゃんとしたエラー
 		return r, fmt.Errorf("not target")
 	}
 	{
-		body, err := internal.ConvertBody(message)
+		body, err := internal.ConvertBody(mail)
 		if err != nil {
 			return r, err
 		}

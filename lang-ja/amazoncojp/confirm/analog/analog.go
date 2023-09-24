@@ -6,10 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"google.golang.org/api/gmail/v1"
-
 	"github.com/akiakaba/escol"
-	"github.com/akiakaba/escol/gmu"
 	"github.com/akiakaba/escol/internal/parse"
 	"github.com/akiakaba/escol/mu"
 )
@@ -52,25 +49,25 @@ func (d *Detail) OrderDetailURL() string {
 	return fmt.Sprintf("https://www.amazon.co.jp/gp/your-account/order-details/ref=_or?ie=UTF8&orderID=%s", d.OrderID)
 }
 
-func Filter(message *gmail.Message, hint *escol.Hint) bool {
-	return hint.From() == `"Amazon.co.jp" <auto-confirm@amazon.co.jp>` &&
-		strings.HasPrefix(hint.Subject(), "Amazon.co.jpでのご注文")
+func Filter(mail escol.Mail) bool {
+	return mail.From() == `"Amazon.co.jp" <auto-confirm@amazon.co.jp>` &&
+		strings.HasPrefix(mail.Subject(), "Amazon.co.jpでのご注文")
 }
 
-func Scrape(message *gmail.Message, hint *escol.Hint) (*Receipt, error) {
-	if !Filter(message, hint) {
+func Scrape(mail escol.Mail) (*Receipt, error) {
+	if !Filter(mail) {
 		return nil, fmt.Errorf("filtered")
 	}
-	plain, found := gmu.FindPartByMimeType(message.Payload, "text/plain")
+	plain, found := mail.FindPart("text/plain")
 	if !found {
-		return nil, fmt.Errorf("text/plain parts not found. from:%s", hint.From())
+		return nil, fmt.Errorf("text/plain parts not found. from:%s", mail.From())
 	}
-	body, err := mu.DecodeBase64(plain.Body.Data)
+	body, err := mu.DecodeBase64(plain.Body())
 	if err != nil {
 		return nil, err
 	}
 	r := &Receipt{
-		Subject: hint.Subject(),
+		Subject: mail.Subject(),
 		Body:    mu.NormalizeSpaces(body),
 	}
 	split := strings.Split(r.Body, " ================================================================================= ")

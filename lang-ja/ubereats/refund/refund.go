@@ -6,8 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	"google.golang.org/api/gmail/v1"
-
 	"github.com/akiakaba/escol"
 	"github.com/akiakaba/escol/lang-ja/ubereats/internal"
 )
@@ -20,26 +18,26 @@ type Refund struct {
 	Body    string
 }
 
-func Filter(message *gmail.Message, hint *escol.Hint) bool {
-	body, err := internal.ConvertBody(message)
+func Filter(mail escol.Mail) bool {
+	body, err := internal.ConvertBody(mail)
 	if err != nil {
 		return false
 	}
-	return hint.From() == `"Uber の領収書" <noreply@uber.com>` &&
+	return mail.From() == `"Uber の領収書" <noreply@uber.com>` &&
 		strings.Contains(body, "領収書を変更いたしました。")
 }
 
-func Scrape(message *gmail.Message, hint *escol.Hint) (*Refund, error) {
+func Scrape(mail escol.Mail) (*Refund, error) {
 	r := &Refund{
-		Subject: hint.Subject(),
-		Body:    message.Payload.Body.Data,
+		Subject: mail.Subject(),
+		Body:    mail.Body(),
 	}
-	if !Filter(message, hint) {
+	if !Filter(mail) {
 		// fixme: ちゃんとしたエラー
 		return r, fmt.Errorf("not target")
 	}
 	{
-		body, err := internal.ConvertBody(message)
+		body, err := internal.ConvertBody(mail)
 		if err != nil {
 			return r, err
 		}
