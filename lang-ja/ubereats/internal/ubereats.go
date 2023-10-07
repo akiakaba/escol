@@ -3,12 +3,11 @@ package internal
 import (
 	"html"
 
-	"github.com/akiakaba/escol"
 	"github.com/akiakaba/escol/mu"
 )
 
-func ConvertBody(mail escol.Mail) (string, error) {
-	body, err := mu.DecodeBase64(mail.Body())
+func ConvertBody(body string) (string, error) {
+	body, err := mu.DecodeBase64(body)
 	if err != nil {
 		return "", err
 	}

@@ -9,8 +9,12 @@ import (
 )
 
 func DecodeBase64(data string) (string, error) {
-	body, err := base64.URLEncoding.DecodeString(data)
-	return string(body), err
+	bs, err := base64.URLEncoding.DecodeString(data)
+	return string(bs), err
+}
+
+func EncodeBase64(data string) string {
+	return base64.URLEncoding.EncodeToString([]byte(data))
 }
 
 var bmPolicy = bluemonday.NewPolicy().AddSpaceWhenStrippingTag(true)

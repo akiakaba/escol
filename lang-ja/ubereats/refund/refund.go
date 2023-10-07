@@ -19,7 +19,7 @@ type Refund struct {
 }
 
 func Filter(mail escol.Mail) bool {
-	body, err := internal.ConvertBody(mail)
+	body, err := internal.ConvertBody(mail.Body())
 	if err != nil {
 		return false
 	}
@@ -37,7 +37,7 @@ func Scrape(mail escol.Mail) (*Refund, error) {
 		return r, fmt.Errorf("not target")
 	}
 	{
-		body, err := internal.ConvertBody(mail)
+		body, err := internal.ConvertBody(mail.Body())
 		if err != nil {
 			return r, err
 		}
