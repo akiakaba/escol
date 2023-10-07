@@ -13,13 +13,20 @@ import (
 type Receipt struct {
 	ShopName    string
 	TotalAmount int
+	Payments    []Payment
 
 	Subject string
 	Body    string
 }
 
+type Payment struct {
+	Method string
+	Date   string
+	Amount int
+}
+
 func Filter(mail escol.Mail) bool {
-	body, err := internal.ConvertBody(mail)
+	body, err := internal.ConvertBody(mail.Body())
 	if err != nil {
 		return false
 	}
@@ -39,7 +46,7 @@ func Scrape(mail escol.Mail) (*Receipt, error) {
 		return r, fmt.Errorf("not target")
 	}
 	{
-		body, err := internal.ConvertBody(mail)
+		body, err := internal.ConvertBody(mail.Body())
 		if err != nil {
 			return r, err
 		}
@@ -57,8 +64,25 @@ func Scrape(mail escol.Mail) (*Receipt, error) {
 		if len(amountMatches) < 2 {
 			return r, fmt.Errorf("len(amountMatches): %v, body: %s", len(amountMatches), r.Body)
 		}
-		totalAmount := parse.ParseIntFromCommaedDecimal(amountMatches[1])
-		r.TotalAmount = totalAmount
+		r.TotalAmount = parse.ParseIntFromCommaedDecimal(amountMatches[1])
+	}
+	{
+		paymentAreaMatches := regexp.MustCompile(`お支払い (.+) 注文情報のページ にアクセスして、`).FindStringSubmatch(r.Body)
+		if len(paymentAreaMatches) < 2 {
+			return r, fmt.Errorf("len(paymentAreaMatches): %v, body: %s", len(paymentAreaMatches), r.Body)
+		}
+		paymentMatches := regexp.MustCompile(`\s*(.+?)\s+(\d+/\d+/\d+ \d+:\d+)\s+￥([\d,]+)\s*`).FindAllStringSubmatch(paymentAreaMatches[1], -1)
+		if len(paymentMatches) < 1 {
+			return r, fmt.Errorf("len(paymentMatches): %v, body: %s", len(paymentMatches), r.Body)
+		}
+		for _, p := range paymentMatches {
+			r.Payments = append(r.Payments, Payment{
+				Method: p[1],
+				Date:   p[2],
+				Amount: parse.ParseIntFromCommaedDecimal(p[3]),
+			})
+		}
+
 	}
 	return r, nil
 }
