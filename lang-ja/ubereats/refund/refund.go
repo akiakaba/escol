@@ -11,11 +11,11 @@ import (
 )
 
 type Refund struct {
-	ShopName       string
-	TotalAmountInt int
+	ShopName    string `json:"shop_name"`
+	TotalAmount int    `json:"total_amount"`
 
-	Subject string
-	Body    string
+	Subject string `json:"-"`
+	Body    string `json:"-"`
 }
 
 func Filter(mail escol.Mail) bool {
@@ -56,7 +56,7 @@ func Scrape(mail escol.Mail) (*Refund, error) {
 			return r, fmt.Errorf("len(amountMatches): %v, body: %s", len(amountMatches), r.Body)
 		}
 		totalAmount := parse.ParseIntFromCommaedDecimal(amountMatches[1])
-		r.TotalAmountInt = -totalAmount
+		r.TotalAmount = -totalAmount
 	}
 	return r, nil
 }

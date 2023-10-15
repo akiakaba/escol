@@ -10,10 +10,10 @@ import (
 )
 
 type Unpaid struct {
-	ShopName string
+	ShopName string `json:"shop_name"`
 
-	Subject string
-	Body    string
+	Subject string `json:"-"`
+	Body    string `json:"-"`
 }
 
 func Filter(mail escol.Mail) bool {

@@ -11,18 +11,18 @@ import (
 )
 
 type Receipt struct {
-	ShopName    string
-	TotalAmount int
-	Payments    []Payment
+	ShopName    string    `json:"shop_name"`
+	TotalAmount int       `json:"total_amount"`
+	Payments    []Payment `json:"payments"`
 
-	Subject string
-	Body    string
+	Subject string `json:"-"`
+	Body    string `json:"-"`
 }
 
 type Payment struct {
-	Method string
-	Date   string
-	Amount int
+	Method string `json:"method"`
+	Date   string `json:"date"`
+	Amount int    `json:"amount"`
 }
 
 func Filter(mail escol.Mail) bool {
